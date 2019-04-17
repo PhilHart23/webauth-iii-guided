@@ -1,5 +1,8 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken')
+
+const secrets = require('../config/secrets.js');
 
 const Users = require('../users/users-model.js');
 
@@ -25,8 +28,15 @@ router.post('/login', (req, res) => {
     .first()
     .then(user => {
       if (user && bcrypt.compareSync(password, user.password)) {
+        const token = generateToken(user);
+
+        // the server needs to return the token to the client
+        // this doesn't happen automatically like it happens with cookies
+        
+
         res.status(200).json({
-          message: `Welcome ${user.username}!`,
+          message: `Welcome ${user.username}!, have a token...`,
+          token
         });
       } else {
         res.status(401).json({ message: 'Invalid Credentials' });
@@ -37,4 +47,32 @@ router.post('/login', (req, res) => {
     });
 });
 
+function generateToken(user) {
+  const payload = {
+    subject: user.id,
+    username: user.username,
+    roles: ['Student'] // usually this comes from the database, won't manually add roles or etc.
+  }
+
+  const options = {
+    expiresIn: '1d'
+  }
+  return jwt.sign(payload, secrets.jwtSecret, options)
+}
+
+
+
+
+
+
+
+
+
+
+
+
 module.exports = router;
+
+
+
+eyJhtGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWJqZWN0Ijo3LCJ1c2VybmFtZSI6Im1hcmMzIiwicm9sZXMiOlsiU3R1ZGVudCJdLCJpYXQiOjE1NTU1MjE1MzYsImV4cCI6MTU1NTYwNzkzNn0.Lbcoa5YBIkKKhw6V-_9v6Acj7uDMW4Axh_RdCnUWwk4
